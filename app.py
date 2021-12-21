@@ -6,16 +6,15 @@ from sklearn.preprocessing import MinMaxScaler
 from keras.models import load_model
 
 import dash
-import dash_core_components as dcc
-import dash_html_components as html
+from dash import  dcc, html
 import plotly.express as px
-from plotly import  graph_objs as go
+from plotly import  graph_objects as go
 import pandas as pd
 from dash.dependencies import Input, Output
 
 
 
-client = MongoClient('mongodb://theadmin:axcaxs@10.186.0.2:27017/Investments')
+client = MongoClient('mongodb://theadmin:axcaxs@34.116.221.63:27017/Investments')
 db = client.Investments
 names = ['Cerner',
  'Kennametal Inc',
@@ -34,14 +33,12 @@ names = ['Cerner',
  'Wyndham Hotels & Resorts'
  ]
 
+df = pd.read_csv('filtered_300.csv')
 
-
-name = 'JD.com'
 def get_data(name):
+    print(name)
     sc = MinMaxScaler(feature_range=(0,1))
-    instrument, *_ = db.Instrument.find({'name':name})
-    res = OrderedDict({candle['time'].date(): [(candle['o'] + candle['c'])/2] for candle in instrument['candles']})
-    data =  pd.DataFrame(res, index=[name]).T
+    data = df[[name]]
     data = data.assign(scale=sc.fit_transform(data[name]))
     return data, sc
 
@@ -80,14 +77,14 @@ app.layout = html.Div(children=[
     dcc.Dropdown(
         id='name-dropdown',
         options=[
-           {name:name} for name in names
+           {'label':name,'value':name} for name in names
         ],
-        value='NYC'
+        value='Cerner'
     ),
 
     dcc.Graph(
         id='predict-graph',
-        figure=None
+        figure=go.Figure()
     )
 ])
 
@@ -105,4 +102,4 @@ def update_output(name):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=True, host='0.0.0.0')
